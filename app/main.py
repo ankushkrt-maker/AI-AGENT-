@@ -68,4 +68,4 @@ async def ai_status():
 
 @app.get("/", response_class=HTMLResponse)
 async def home():
-    return open("frontend/index.html", encoding="utf-8").read()
+    return open("frontend/pro.html", encoding="utf-8").read()
