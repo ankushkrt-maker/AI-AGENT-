@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LIQUIDITY HUNTER AI</title>
+<style>
+body{font-family:system-ui,sans-serif;margin:0;background:#0b1020;color:#eef2ff}main{max-width:900px;margin:auto;padding:20px}button{padding:12px 16px;border:0;border-radius:10px;cursor:pointer}table{width:100%;margin-top:20px;border-collapse:collapse}td,th{padding:9px;border-bottom:1px solid #28304a;text-align:left}.muted{color:#9aa4bf}.good{font-weight:700}
+</style>
+</head>
+<body><main>
+<h1>LIQUIDITY HUNTER AI</h1>
+<p class="muted">Market research dashboard — research/paper mode only.</p>
+<button id="scan">Scan Market</button><span id="status" class="muted"> Ready</span>
+<table><thead><tr><th>Symbol</th><th>Signal</th><th>Score</th><th>Label</th></tr></thead><tbody id="rows"></tbody></table>
+<script>
+const btn=document.getElementById('scan'),status=document.getElementById('status'),rows=document.getElementById('rows');
+btn.onclick=async()=>{status.textContent=' Scanning...';rows.innerHTML='';try{const r=await fetch('/scan?interval=5m&limit=30');const d=await r.json();for(const x of d.results||[]){const tr=document.createElement('tr');tr.innerHTML=`<td>${x.symbol||''}</td><td>${x.best_signal||x.error||''}</td><td>${x.score??''}</td><td class="good">${x.label||''}</td>`;rows.appendChild(tr)}status.textContent=' Done';}catch(e){status.textContent=' Error: '+e.message}}
+</script></main></body></html>
