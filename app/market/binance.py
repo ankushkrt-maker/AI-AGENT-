@@ -1,6 +1,8 @@
 import httpx
 import pandas as pd
-from app.config import BINANCE_BASE_URL, BINANCE_FALLBACK_URL
+from app.config import BINANCE_BASE_URL
+
+BINANCE_FALLBACK_URL = "https://api.binance.com"
 
 
 def _headers():
@@ -9,7 +11,7 @@ def _headers():
 
 async def _get_json(path: str, params: dict):
     urls = [f"{BINANCE_BASE_URL}{path}"]
-    if BINANCE_FALLBACK_URL and BINANCE_FALLBACK_URL != BINANCE_BASE_URL:
+    if BINANCE_FALLBACK_URL != BINANCE_BASE_URL:
         urls.append(f"{BINANCE_FALLBACK_URL}{path}")
 
     last_error = None
@@ -30,14 +32,14 @@ async def _get_json(path: str, params: dict):
 
 
 async def klines(symbol: str, interval: str = "5m", limit: int = 300) -> pd.DataFrame:
-    data = await _get_json(
-        "/fapi/v1/klines",
-        {"symbol": symbol.upper(), "interval": interval, "limit": limit},
-    )
-
-    # If Binance Futures rejects the Render/cloud IP, retry against Binance Spot.
-    # Spot candles keep the research/scoring dashboard functional.
-    if not isinstance(data, list):
+    # Futures first; if Binance blocks the Render/cloud IP, use Spot candles.
+    data = None
+    try:
+        data = await _get_json(
+            "/fapi/v1/klines",
+            {"symbol": symbol.upper(), "interval": interval, "limit": limit},
+        )
+    except Exception:
         data = await _get_json(
             "/api/v3/klines",
             {"symbol": symbol.upper(), "interval": interval, "limit": limit},
@@ -55,5 +57,4 @@ async def ticker_24h():
     try:
         return await _get_json("/fapi/v1/ticker/24hr", {})
     except Exception:
-        # Fallback to Spot 24h ticker when Futures API returns 418/geo/cloud rejection.
         return await _get_json("/api/v3/ticker/24hr", {})
