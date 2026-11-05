@@ -7,7 +7,8 @@ import pandas as pd
 
 BASE = "https://fapi.binance.com"
 TIMEFRAME = os.getenv("FUTURES_SCAN_INTERVAL", "5m")
-MIN_QUOTE_VOLUME = float(os.getenv("MIN_QUOTE_VOLUME_USDT", "5000000"))
+MIN_QUOTE_VOLUME = float(os.getenv("MIN_QUOTE_VOLUME_USDT", "0"))
+SIGNAL_MIN_QUOTE_VOLUME = float(os.getenv("SIGNAL_MIN_QUOTE_VOLUME_USDT", "5000000"))
 MAX_CONCURRENCY = int(os.getenv("SCAN_CONCURRENCY", "6"))
 ACCOUNT_INR = float(os.getenv("ACCOUNT_EQUITY_INR", "10000"))
 RISK_PCT = float(os.getenv("MAX_RISK_PER_TRADE_PCT", "0.25"))
@@ -110,7 +111,7 @@ async def _symbol_scan(client, sem, symbol, ticker, funding):
                 short_reasons.append("OI contracting: possible position unwind")
 
             edge = long_score - short_score
-            if max(long_score, short_score) < 65 or abs(edge) < 20 or not (oi_up and rvol >= 1.2):
+            if max(long_score, short_score) < 65 or abs(edge) < 20 or not (oi_up and rvol >= 1.2) or _num(ticker.get("quoteVolume")) < SIGNAL_MIN_QUOTE_VOLUME:
                 decision = "NO TRADE"
             else:
                 decision = "LONG" if long_score > short_score else "SHORT"
@@ -160,6 +161,7 @@ async def scan_all_futures():
             "active_contracts": len(active),
             "liquid_contracts_scanned": len(liquid),
             "min_quote_volume_usdt": MIN_QUOTE_VOLUME,
+            "signal_min_quote_volume_usdt": SIGNAL_MIN_QUOTE_VOLUME,
             "interval": TIMEFRAME,
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "mode": "signal-only / research",
