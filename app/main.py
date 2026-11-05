@@ -7,8 +7,10 @@ from app.signals.scorer import scores, label
 from app.signals.v3 import build_v3_signal
 from app.risk.engine import dynamic_stop
 from app.ai.explainer import explain, llm_status
+from app.futures.api import router as futures_router
 
-app = FastAPI(title=APP_NAME, version="3.0")
+app = FastAPI(title=APP_NAME, version="4.0")
+app.include_router(futures_router)
 
 @app.get("/health")
 async def health():
@@ -68,4 +70,4 @@ async def ai_status():
 
 @app.get("/", response_class=HTMLResponse)
 async def home():
-    return open("frontend/pro.html", encoding="utf-8").read()
+    return open("frontend/futures.html", encoding="utf-8").read()
